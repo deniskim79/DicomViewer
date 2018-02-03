@@ -37,6 +37,7 @@
             this.buttonFlipTB = new System.Windows.Forms.Button();
             this.buttonFlipLR = new System.Windows.Forms.Button();
             this.buttonHeader = new System.Windows.Forms.Button();
+            this.buttonReset = new System.Windows.Forms.Button();
             this.panelMain.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -44,7 +45,7 @@
             // 
             this.buttonOpen.Location = new System.Drawing.Point(12, 12);
             this.buttonOpen.Name = "buttonOpen";
-            this.buttonOpen.Size = new System.Drawing.Size(159, 39);
+            this.buttonOpen.Size = new System.Drawing.Size(90, 39);
             this.buttonOpen.TabIndex = 0;
             this.buttonOpen.Text = "Open";
             this.buttonOpen.UseVisualStyleBackColor = true;
@@ -74,7 +75,7 @@
             // 
             // buttonRotateCW
             // 
-            this.buttonRotateCW.Location = new System.Drawing.Point(194, 12);
+            this.buttonRotateCW.Location = new System.Drawing.Point(120, 12);
             this.buttonRotateCW.Name = "buttonRotateCW";
             this.buttonRotateCW.Size = new System.Drawing.Size(80, 39);
             this.buttonRotateCW.TabIndex = 3;
@@ -84,7 +85,7 @@
             // 
             // buttonRotateCCW
             // 
-            this.buttonRotateCCW.Location = new System.Drawing.Point(280, 12);
+            this.buttonRotateCCW.Location = new System.Drawing.Point(206, 12);
             this.buttonRotateCCW.Name = "buttonRotateCCW";
             this.buttonRotateCCW.Size = new System.Drawing.Size(80, 39);
             this.buttonRotateCCW.TabIndex = 4;
@@ -94,7 +95,7 @@
             // 
             // buttonRotate180
             // 
-            this.buttonRotate180.Location = new System.Drawing.Point(366, 12);
+            this.buttonRotate180.Location = new System.Drawing.Point(292, 12);
             this.buttonRotate180.Name = "buttonRotate180";
             this.buttonRotate180.Size = new System.Drawing.Size(80, 39);
             this.buttonRotate180.TabIndex = 5;
@@ -104,7 +105,7 @@
             // 
             // buttonFlipTB
             // 
-            this.buttonFlipTB.Location = new System.Drawing.Point(452, 12);
+            this.buttonFlipTB.Location = new System.Drawing.Point(378, 12);
             this.buttonFlipTB.Name = "buttonFlipTB";
             this.buttonFlipTB.Size = new System.Drawing.Size(80, 39);
             this.buttonFlipTB.TabIndex = 6;
@@ -114,7 +115,7 @@
             // 
             // buttonFlipLR
             // 
-            this.buttonFlipLR.Location = new System.Drawing.Point(538, 12);
+            this.buttonFlipLR.Location = new System.Drawing.Point(464, 12);
             this.buttonFlipLR.Name = "buttonFlipLR";
             this.buttonFlipLR.Size = new System.Drawing.Size(80, 39);
             this.buttonFlipLR.TabIndex = 7;
@@ -124,7 +125,7 @@
             // 
             // buttonHeader
             // 
-            this.buttonHeader.Location = new System.Drawing.Point(624, 12);
+            this.buttonHeader.Location = new System.Drawing.Point(642, 12);
             this.buttonHeader.Name = "buttonHeader";
             this.buttonHeader.Size = new System.Drawing.Size(80, 39);
             this.buttonHeader.TabIndex = 8;
@@ -132,11 +133,22 @@
             this.buttonHeader.UseVisualStyleBackColor = true;
             this.buttonHeader.Click += new System.EventHandler(this.buttonHeader_Click);
             // 
+            // buttonReset
+            // 
+            this.buttonReset.Location = new System.Drawing.Point(550, 12);
+            this.buttonReset.Name = "buttonReset";
+            this.buttonReset.Size = new System.Drawing.Size(80, 39);
+            this.buttonReset.TabIndex = 9;
+            this.buttonReset.Text = "Reset";
+            this.buttonReset.UseVisualStyleBackColor = true;
+            this.buttonReset.Click += new System.EventHandler(this.buttonReset_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 511);
+            this.Controls.Add(this.buttonReset);
             this.Controls.Add(this.buttonHeader);
             this.Controls.Add(this.buttonFlipLR);
             this.Controls.Add(this.buttonFlipTB);
@@ -164,6 +176,7 @@
         private System.Windows.Forms.Button buttonFlipTB;
         private System.Windows.Forms.Button buttonFlipLR;
         private System.Windows.Forms.Button buttonHeader;
+        private System.Windows.Forms.Button buttonReset;
     }
 }
 

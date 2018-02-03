@@ -32,6 +32,12 @@ namespace CSCustomDisplay
 
         private RotateFlipType m_eCurRF = RotateFlipType.RotateNoneFlipNone;
 
+        private double DefaultWidth = int.MinValue;
+        private double DefaultCenter = int.MinValue;
+
+        private double ZoomRatio = -1.0;
+        private Point PanPosition = new Point(0, 0);
+
         public enum eRotateFlipDirection
         {
             eReset,
@@ -166,6 +172,9 @@ namespace CSCustomDisplay
                     return false;
                 }
 
+                DefaultWidth = m_dcmImage.WindowWidth;
+                DefaultCenter = m_dcmImage.WindowCenter;
+
                 m_eCurRF = RotateFlipType.RotateNoneFlipNone;
                 Refresh();
 
@@ -202,25 +211,60 @@ namespace CSCustomDisplay
 
         private void CustomView_MouseMove(object sender, MouseEventArgs e)
         {
-            if(m_bCapture == true && e.Button == MouseButtons.Right && m_dcmImage != null)
+            if(m_bCapture == true && m_dcmImage != null)
             {
                 int nx = e.X - m_pointSave.X;
                 int ny = e.Y - m_pointSave.Y;
 
+                var bCtrl = ModifierKeys.HasFlag(Keys.Control);
+                var bAlt = ModifierKeys.HasFlag(Keys.LMenu);
+                var bShift = ModifierKeys.HasFlag(Keys.Shift);
+
                 float fRatio = 1.0f;
 
-                //if (bCtrl && !bShift && !bAlt)
-                //    fRatio = 10.0f;
-                //else if (bCtrl && bShift && !bAlt)
-                //    fRatio = 100.0f;
+                if (bCtrl && !bShift && !bAlt)
+                    fRatio = 10.0f;
+                else if (bCtrl && bShift && !bAlt)
+                    fRatio = 100.0f;
 
-                m_dcmImage.WindowWidth += (int)(fRatio * nx);
-                m_dcmImage.WindowCenter -= (int)(fRatio * ny);
+                var bUpdate = false;
+                if (e.Button == MouseButtons.Right)
+                {
+                    m_dcmImage.WindowWidth += (fRatio * nx);
+                    m_dcmImage.WindowCenter -= (fRatio * ny);
 
-                if (m_dcmImage.WindowWidth < 1)
-                    m_dcmImage.WindowWidth = 1;
+                    if (m_dcmImage.WindowWidth < 1)
+                        m_dcmImage.WindowWidth = 1;
 
-                Refresh();
+                    bUpdate = true;
+                }
+                else if(e.Button == MouseButtons.Left)
+                {
+                    bUpdate = true;
+                    if (bCtrl && !bShift && !bAlt)
+                    {
+                        // Zoom
+                        var zTemp = ZoomRatio;
+                        zTemp += nx;
+
+                        if(zTemp > 500 || zTemp < 10.0)
+                            bUpdate = false;
+                        else
+                            ZoomRatio = zTemp;
+                            
+                    }
+                    else if (!bCtrl && bShift && !bAlt)
+                    {
+                        // Pan
+                        PanPosition.X += nx;
+                        PanPosition.Y += ny;
+                    }
+                    else
+                        bUpdate = false;
+                }
+
+                if(bUpdate)
+                    Refresh();
 
                 m_pointSave.X = e.X;
                 m_pointSave.Y = e.Y;
@@ -232,7 +276,7 @@ namespace CSCustomDisplay
             return (int)(((long)number * numerator + (denominator >> 1)) / denominator);
         }
 
-        private Rectangle GetFitRect(Size wndSize, Size imgSize1)
+        private Rectangle GetDrawRect(Size wndSize, Size imgSize1)
         {
             int nx = 0, ny = 0, nw = 0, nh = 0;
 
@@ -255,10 +299,16 @@ namespace CSCustomDisplay
                 nh = MulDiv(nw, nImgHeight, nImgWidth);
             }
 
+            if(ZoomRatio < 1.0)
+                ZoomRatio = ((nw * 1.0) / nImgWidth * 100);
+
+            nw = MulDiv(nImgWidth, (int)ZoomRatio, 100);
+            nh = MulDiv(nImgHeight, (int)ZoomRatio, 100);
+
             nx = (wndSize.Width - nw) / 2;
             ny = (wndSize.Height - nh) / 2;
-            
-            Rectangle rc = new Rectangle(nx, ny, nw, nh);
+                        
+            Rectangle rc = new Rectangle(PanPosition.X + nx, PanPosition.Y + ny, nw, nh);
             return rc;
         }
 
@@ -269,9 +319,15 @@ namespace CSCustomDisplay
 
             if(direction == eRotateFlipDirection.eReset)
             {
-                if (m_eCurRF == RotateFlipType.RotateNoneFlipNone)
+                if (m_eCurRF == RotateFlipType.RotateNoneFlipNone && ZoomRatio < 1.0 && PanPosition.X == 0 && PanPosition.Y == 0)
                     return;
+
                 m_eCurRF = RotateFlipType.RotateNoneFlipNone;
+                m_dcmImage.WindowWidth = DefaultWidth;
+                m_dcmImage.WindowCenter = DefaultCenter;
+
+                ZoomRatio = -1.0;
+                PanPosition.X = PanPosition.Y = 0;
             }
             else
             {
@@ -374,7 +430,7 @@ namespace CSCustomDisplay
 
                 using (var bmpImage = m_dcmImage.RenderImage().As<Bitmap>())
                 {
-                    Rectangle rcDraw = GetFitRect(ClientSize, bmpImage.Size);
+                    Rectangle rcDraw = GetDrawRect(ClientSize, bmpImage.Size);
 
                     bmpImage.RotateFlip(m_eCurRF);
                     
@@ -452,6 +508,19 @@ namespace CSCustomDisplay
                     // Draw RotateFlip Value
                     var erf = (eRFText)m_eCurRF;
                     tagValue = erf.ToString();
+                    msSize = g.MeasureString(tagValue, font);
+                    drawPos.X = ClientSize.Width - msSize.Width - fGap;
+                    drawPos.Y -= (fGap + msSize.Height);
+                    DrawShadowString(g, tagValue, drawPos, font);
+                    
+                    tagValue = string.Format("PAN : {0}, {1}", PanPosition.X, PanPosition.Y);
+                    msSize = g.MeasureString(tagValue, font);
+                    drawPos.X = ClientSize.Width - msSize.Width - fGap;
+                    drawPos.Y -= (fGap + msSize.Height);
+                    DrawShadowString(g, tagValue, drawPos, font);
+
+
+                    tagValue = string.Format("ZOOM : {0}%", (int)ZoomRatio);
                     msSize = g.MeasureString(tagValue, font);
                     drawPos.X = ClientSize.Width - msSize.Width - fGap;
                     drawPos.Y -= (fGap + msSize.Height);

@@ -52,6 +52,12 @@ namespace CSTest
                 myView.RotateFilp(CSCustomDisplay.CustomView.eRotateFlipDirection.eFlipLR);
         }
 
+        private void buttonReset_Click(object sender, EventArgs e)
+        {
+            if (myView.IsImageOpen())
+                myView.RotateFilp(CSCustomDisplay.CustomView.eRotateFlipDirection.eReset);
+        }
+
         private void buttonHeader_Click(object sender, EventArgs e)
         {
             if (myView.DcmFile == null)
