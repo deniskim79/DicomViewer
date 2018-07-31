@@ -289,13 +289,8 @@ namespace CSTest
 
         public Exam GetExam(string studyUID)
         {
-            foreach (var exam in _listExam)
-            {
-                if (exam.StudyUID == studyUID)
-                    return exam;
-            }
-
-            return null;
+            var exam = _listExam.Find(x => x.StudyUID == studyUID);
+            return exam;
         }
 
         public Exam GetExam(int index)
