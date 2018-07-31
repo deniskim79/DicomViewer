@@ -376,9 +376,37 @@ namespace CSCustomDisplay
             Refresh();
         }
 
-        public void Reset()
+        public enum ResetType
         {
-            ZoomRatio = -1;
+            resetAll,
+            resetZoom,
+            resetPan,
+            resetRotateFlip
+        }
+
+        public void Reset(ResetType reset)
+        {
+            switch(reset)
+            {
+                case ResetType.resetAll:
+                    ZoomRatio = -1;
+                    PanPosition.X = PanPosition.Y = 0;
+                    _FlipX = false;
+                    _FlipY = false;
+                    _Rotate = 0;
+                    break;
+                case ResetType.resetZoom:
+                    ZoomRatio = -1;
+                    break;
+                case ResetType.resetPan:
+                    PanPosition.X = PanPosition.Y = 0;
+                    break;
+                case ResetType.resetRotateFlip:
+                    _FlipX = false;
+                    _FlipY = false;
+                    _Rotate = 0;
+                    break;
+            }
         }
 
         private void CustomView_Paint(object sender, PaintEventArgs e)

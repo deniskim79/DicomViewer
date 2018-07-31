@@ -81,10 +81,9 @@ namespace CSTest
             openFile.ShowDialog();
             if (openFile.FileNames != null && openFile.FileNames.Length > 0)
             {
-                Manager mgr = new Manager();
-                foreach(var file in openFile.FileNames)
+                foreach(var dcmPath in openFile.FileNames)
                 {
-                    var dcmFile = Dicom.DicomFile.Open(file);
+                    var dcmFile = Dicom.DicomFile.Open(dcmPath);
                     Dicom.DicomFileMetaInformation mi = dcmFile.FileMetaInfo;
                     Dicom.DicomDataset ds = dcmFile.Dataset;
 
@@ -94,37 +93,55 @@ namespace CSTest
                     if (exam == null)
                     {
                         exam = new Exam(studyUID);
+
+                        exam.TransferSyntax = mi.TransferSyntax;
+
+                        exam.StudyDate = ds.Get(Dicom.DicomTag.StudyDate, "");
+                        exam.StudyTime = ds.Get(Dicom.DicomTag.StudyTime, "");
+
                         mgr.Add(exam);
                     }
                     
                     var sopInstanceUID = ds.Get(Dicom.DicomTag.SOPInstanceUID, "");
+                    var seriesUID = ds.Get(Dicom.DicomTag.SeriesInstanceUID, "");
                     var seriesNumber = ds.Get(Dicom.DicomTag.SeriesNumber, "");
                     var instanceNumber = ds.Get(Dicom.DicomTag.InstanceNumber, "");
 
-                    ExamFile ofd = exam.GetFileByPath(file);
-                    //exam.GetFile(seriesNumber, instanceNumber);
-
-                    if (ofd == null)
+                    var series = exam.GetSeries(seriesUID, seriesNumber);
+                    if(series == null)
                     {
-                        ofd = new ExamFile();
+                        series = new ExamSeries();
 
-                        ofd.FilePath = file;
-                        ofd.SopInstanceUID = sopInstanceUID;
-                        ofd.SeriesNumber = seriesNumber;
-                        ofd.InstanceNumber = instanceNumber;
+                        series.SeriesUID = seriesUID;
+                        series.SeriesNumber = seriesNumber;
 
-                        exam.Add(ofd);
+                        series.SeriesDate = ds.Get(Dicom.DicomTag.SeriesDate, "");
+                        series.SeriesTime = ds.Get(Dicom.DicomTag.SeriesTime, "");
+
+                        exam.Add(series);
+                    }
+
+                    var file = series.GetFileByUID(sopInstanceUID);
+                    if (file == null)
+                    {
+                        file = new ExamSeriesFile();
+                        file.FilePath = dcmPath;
+                        file.SopInstanceUID = sopInstanceUID;
+                        file.SeriesNumber = seriesNumber;
+                        file.InstanceNumber = instanceNumber;
+
+                        series.Add(file);
                     }
                 }
 
-                mgr.SortExamFile();
+                mgr.Sort();
             }
         }
 
         private void FormMain_Resize(object sender, EventArgs e)
         {
             if (myView.DcmFile != null)
-                myView.Reset();
+                myView.Reset(CSCustomDisplay.CustomView.ResetType.resetZoom);
         }
     }
 }
