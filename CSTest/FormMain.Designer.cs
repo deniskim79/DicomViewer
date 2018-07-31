@@ -172,6 +172,7 @@
             this.MinimumSize = new System.Drawing.Size(975, 690);
             this.Name = "FormMain";
             this.Text = "DicomTest";
+            this.Resize += new System.EventHandler(this.FormMain_Resize);
             this.panelMain.ResumeLayout(false);
             this.ResumeLayout(false);
 

@@ -30,7 +30,6 @@ namespace CSCustomDisplay
         private SolidBrush BrushBlack = new SolidBrush(Color.Black);
         private SolidBrush BrushWhite = new SolidBrush(Color.White);
 
-        private RotateFlipType m_eCurRF = RotateFlipType.RotateNoneFlipNone;
         private int _Rotate = 0;
         private bool _FlipX = false;
         private bool _FlipY = false;
@@ -121,7 +120,7 @@ namespace CSCustomDisplay
         public string GetTag(UseTags.eTagName tagName)
         {
             int nIndex = (int)tagName;
-            if (nIndex < 0 || nIndex > (int)UseTags.eTagName.eAllTagCount)
+            if (nIndex < 0 || nIndex >= (int)UseTags.eTagName.eAllTagCount)
                 throw new Exception("Tag Index out of range");
 
             if(m_dcmFile == null)
@@ -181,7 +180,11 @@ namespace CSCustomDisplay
                 DefaultWidth = m_dcmImage.WindowWidth;
                 DefaultCenter = m_dcmImage.WindowCenter;
 
-                m_eCurRF = RotateFlipType.RotateNoneFlipNone;
+                _FlipX = _FlipY = false;
+                _Rotate = 0;
+                ZoomRatio = 0;
+                PanPosition.X = PanPosition.Y = 0;
+
                 Refresh();
 
                 return true;
@@ -288,12 +291,6 @@ namespace CSCustomDisplay
 
             int nImgWidth = imgSize1.Width;
             int nImgHeight = imgSize1.Height;
-            if(useRFValue == true && ((int)m_eCurRF & 1) == 1)
-            {
-                // Image rotated 90 or 270
-                nImgWidth = imgSize1.Height;
-                nImgHeight = imgSize1.Width;
-            }
 
             // Fit to dst
             nh = wndSize.Height;
@@ -325,10 +322,6 @@ namespace CSCustomDisplay
 
             if(direction == eRotateFlipDirection.eReset)
             {
-                if (m_eCurRF == RotateFlipType.RotateNoneFlipNone && ZoomRatio < 1.0 && PanPosition.X == 0 && PanPosition.Y == 0)
-                    return;
-
-                m_eCurRF = RotateFlipType.RotateNoneFlipNone;
                 m_dcmImage.WindowWidth = DefaultWidth;
                 m_dcmImage.WindowCenter = DefaultCenter;
 
@@ -340,90 +333,6 @@ namespace CSCustomDisplay
             }
             else
             {
-                switch (m_eCurRF)
-                {
-                    case RotateFlipType.RotateNoneFlipNone:
-                        switch (direction)
-                        {
-                            case eRotateFlipDirection.eRotateCW: m_eCurRF = RotateFlipType.Rotate90FlipNone; break;
-                            case eRotateFlipDirection.eRotateCCW: m_eCurRF = RotateFlipType.Rotate270FlipNone; break;
-                            case eRotateFlipDirection.eFlipLR: m_eCurRF = RotateFlipType.RotateNoneFlipX; break;
-                            case eRotateFlipDirection.eFlipTB: m_eCurRF = RotateFlipType.Rotate180FlipX; break;
-                            case eRotateFlipDirection.eRotate180: m_eCurRF = RotateFlipType.Rotate180FlipNone; break;
-                        }
-                        break;
-                    case RotateFlipType.Rotate90FlipNone:
-                        switch (direction)
-                        {
-                            case eRotateFlipDirection.eRotateCW: m_eCurRF = RotateFlipType.Rotate180FlipNone; break;
-                            case eRotateFlipDirection.eRotateCCW: m_eCurRF = RotateFlipType.RotateNoneFlipNone; break;
-                            case eRotateFlipDirection.eFlipLR: m_eCurRF = RotateFlipType.Rotate90FlipX; break;
-                            case eRotateFlipDirection.eFlipTB: m_eCurRF = RotateFlipType.Rotate270FlipX; break;
-                            case eRotateFlipDirection.eRotate180: m_eCurRF = RotateFlipType.Rotate270FlipNone; break;
-                        }
-                        break;
-                    case RotateFlipType.Rotate180FlipNone:
-                        switch (direction)
-                        {
-                            case eRotateFlipDirection.eRotateCW: m_eCurRF = RotateFlipType.Rotate270FlipNone; break;
-                            case eRotateFlipDirection.eRotateCCW: m_eCurRF = RotateFlipType.Rotate90FlipNone; break;
-                            case eRotateFlipDirection.eFlipLR: m_eCurRF = RotateFlipType.Rotate180FlipX; break;
-                            case eRotateFlipDirection.eFlipTB: m_eCurRF = RotateFlipType.RotateNoneFlipX; break;
-                            case eRotateFlipDirection.eRotate180: m_eCurRF = RotateFlipType.RotateNoneFlipNone; break;
-                        }
-                        break;
-                    case RotateFlipType.Rotate270FlipNone:
-                        switch (direction)
-                        {
-                            case eRotateFlipDirection.eRotateCW: m_eCurRF = RotateFlipType.RotateNoneFlipNone; break;
-                            case eRotateFlipDirection.eRotateCCW: m_eCurRF = RotateFlipType.Rotate180FlipNone; break;
-                            case eRotateFlipDirection.eFlipLR: m_eCurRF = RotateFlipType.Rotate270FlipX; break;
-                            case eRotateFlipDirection.eFlipTB: m_eCurRF = RotateFlipType.Rotate90FlipX; break;
-                            case eRotateFlipDirection.eRotate180: m_eCurRF = RotateFlipType.Rotate90FlipNone; break;
-                        }
-                        break;
-                    case RotateFlipType.RotateNoneFlipX: // Top to Bottom
-                        switch (direction)
-                        {
-                            case eRotateFlipDirection.eRotateCW: m_eCurRF = RotateFlipType.Rotate270FlipX; break;
-                            case eRotateFlipDirection.eRotateCCW: m_eCurRF = RotateFlipType.Rotate90FlipX; break;
-                            case eRotateFlipDirection.eFlipLR: m_eCurRF = RotateFlipType.RotateNoneFlipNone; break;
-                            case eRotateFlipDirection.eFlipTB: m_eCurRF = RotateFlipType.Rotate180FlipNone; break;
-                            case eRotateFlipDirection.eRotate180: m_eCurRF = RotateFlipType.Rotate180FlipX; break;
-                        }
-                        break;
-                    case RotateFlipType.Rotate90FlipX:
-                        switch (direction)
-                        {
-                            case eRotateFlipDirection.eRotateCW: m_eCurRF = RotateFlipType.RotateNoneFlipX; break;
-                            case eRotateFlipDirection.eRotateCCW: m_eCurRF = RotateFlipType.Rotate180FlipX; break;
-                            case eRotateFlipDirection.eFlipLR: m_eCurRF = RotateFlipType.Rotate90FlipNone; break;
-                            case eRotateFlipDirection.eFlipTB: m_eCurRF = RotateFlipType.Rotate270FlipNone; break;
-                            case eRotateFlipDirection.eRotate180: m_eCurRF = RotateFlipType.Rotate270FlipX; break;
-                        }
-                        break;
-                    case RotateFlipType.Rotate180FlipX:
-                        switch (direction)
-                        {
-                            case eRotateFlipDirection.eRotateCW: m_eCurRF = RotateFlipType.Rotate90FlipX; break;
-                            case eRotateFlipDirection.eRotateCCW: m_eCurRF = RotateFlipType.Rotate270FlipX; break;
-                            case eRotateFlipDirection.eFlipLR: m_eCurRF = RotateFlipType.Rotate180FlipNone; break;
-                            case eRotateFlipDirection.eFlipTB: m_eCurRF = RotateFlipType.RotateNoneFlipNone; break;
-                            case eRotateFlipDirection.eRotate180: m_eCurRF = RotateFlipType.RotateNoneFlipX; break;
-                        }
-                        break;
-                    case RotateFlipType.Rotate270FlipX:
-                        switch (direction)
-                        {
-                            case eRotateFlipDirection.eRotateCW: m_eCurRF = RotateFlipType.Rotate180FlipX; break;
-                            case eRotateFlipDirection.eRotateCCW: m_eCurRF = RotateFlipType.RotateNoneFlipX; break;
-                            case eRotateFlipDirection.eFlipLR: m_eCurRF = RotateFlipType.Rotate270FlipNone; break;
-                            case eRotateFlipDirection.eFlipTB: m_eCurRF = RotateFlipType.Rotate90FlipNone; break;
-                            case eRotateFlipDirection.eRotate180: m_eCurRF = RotateFlipType.Rotate90FlipX; break;
-                        }
-                        break;
-                }
-
                 switch (direction)
                 {
                     case eRotateFlipDirection.eRotateCW:
@@ -467,6 +376,11 @@ namespace CSCustomDisplay
             Refresh();
         }
 
+        public void Reset()
+        {
+            ZoomRatio = -1;
+        }
+
         private void CustomView_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -476,15 +390,12 @@ namespace CSCustomDisplay
                 // Fill Background
                 g.FillRectangle(BrushBlack, ClientRectangle);
 
-                //using (var bmpImage = m_dcmImage.RenderImage().As<Bitmap>())
                 using (var renderImage = m_dcmImage.RenderImage())
                 {
                     renderImage.Render(0, _FlipX, _FlipY, _Rotate);
                     using (var bmpImage = renderImage.As<Bitmap>())
                     {
                         Rectangle rcDraw = GetDrawRect(ClientSize, bmpImage.Size, false);
-
-                        //bmpImage.RotateFlip(m_eCurRF);
 
                         if (m_bCapture)
                         {
@@ -557,15 +468,7 @@ namespace CSCustomDisplay
                     drawPos.X = ClientSize.Width - msSize.Width - fGap;
                     drawPos.Y -= (fGap + msSize.Height);
                     DrawShadowString(g, tagValue, drawPos, font);
-
-                    // Draw RotateFlip Value
-                    var erf = (eRFText)m_eCurRF;
-                    tagValue = erf.ToString();
-                    msSize = g.MeasureString(tagValue, font);
-                    drawPos.X = ClientSize.Width - msSize.Width - fGap;
-                    drawPos.Y -= (fGap + msSize.Height);
-                    DrawShadowString(g, tagValue, drawPos, font);
-                    
+                   
                     tagValue = string.Format("PAN : {0}, {1}", PanPosition.X, PanPosition.Y);
                     msSize = g.MeasureString(tagValue, font);
                     drawPos.X = ClientSize.Width - msSize.Width - fGap;

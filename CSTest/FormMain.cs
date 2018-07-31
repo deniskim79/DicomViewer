@@ -120,5 +120,11 @@ namespace CSTest
                 mgr.SortExamFile();
             }
         }
+
+        private void FormMain_Resize(object sender, EventArgs e)
+        {
+            if (myView.DcmFile != null)
+                myView.Reset();
+        }
     }
 }
