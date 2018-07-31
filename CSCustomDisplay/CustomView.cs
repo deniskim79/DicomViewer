@@ -31,6 +31,9 @@ namespace CSCustomDisplay
         private SolidBrush BrushWhite = new SolidBrush(Color.White);
 
         private RotateFlipType m_eCurRF = RotateFlipType.RotateNoneFlipNone;
+        private int _Rotate = 0;
+        private bool _FlipX = false;
+        private bool _FlipY = false;
 
         private double DefaultWidth = int.MinValue;
         private double DefaultCenter = int.MinValue;
@@ -158,6 +161,9 @@ namespace CSCustomDisplay
                 m_dcmFile = Dicom.DicomFile.Open(dcmPath);
                 if (m_dcmFile == null)
                 {
+                    _FlipX = _FlipY = false;
+                    _Rotate = 0;
+
                     Refresh();
                     return false;
                 }
@@ -276,13 +282,13 @@ namespace CSCustomDisplay
             return (int)(((long)number * numerator + (denominator >> 1)) / denominator);
         }
 
-        private Rectangle GetDrawRect(Size wndSize, Size imgSize1)
+        private Rectangle GetDrawRect(Size wndSize, Size imgSize1, bool useRFValue)
         {
             int nx = 0, ny = 0, nw = 0, nh = 0;
 
             int nImgWidth = imgSize1.Width;
             int nImgHeight = imgSize1.Height;
-            if(((int)m_eCurRF & 1) == 1)
+            if(useRFValue == true && ((int)m_eCurRF & 1) == 1)
             {
                 // Image rotated 90 or 270
                 nImgWidth = imgSize1.Height;
@@ -312,7 +318,7 @@ namespace CSCustomDisplay
             return rc;
         }
 
-        public void RotateFilp(eRotateFlipDirection direction)
+        public void RotateFilp(eRotateFlipDirection direction, bool refresh)
         {
             if (m_dcmImage == null)
                 return;
@@ -328,6 +334,9 @@ namespace CSCustomDisplay
 
                 ZoomRatio = -1.0;
                 PanPosition.X = PanPosition.Y = 0;
+
+                _FlipX = _FlipY = false;
+                _Rotate = 0;
             }
             else
             {
@@ -414,6 +423,45 @@ namespace CSCustomDisplay
                         }
                         break;
                 }
+
+                switch (direction)
+                {
+                    case eRotateFlipDirection.eRotateCW:
+                        switch (_Rotate)
+                        {
+                            case 0: _Rotate = 90; break;
+                            case 90: _Rotate = 180; break;
+                            case 180: _Rotate = 270; break;
+                            case 270: _Rotate = 0; break;
+                        }
+                        break;
+                    case eRotateFlipDirection.eRotateCCW:
+                        switch (_Rotate)
+                        {
+                            case 0: _Rotate = 270; break;
+                            case 90: _Rotate = 0; break;
+                            case 180: _Rotate = 90; break;
+                            case 270: _Rotate = 180; break;
+                        }
+                        break;
+                    case eRotateFlipDirection.eFlipLR:
+                        _FlipX = !_FlipX;
+                        break;
+                    case eRotateFlipDirection.eFlipTB:
+                        _FlipY = !_FlipY;
+                        break;
+                    case eRotateFlipDirection.eRotate180:
+                        switch(_Rotate)
+                        {
+                            case 0: _Rotate = 180; break;
+                            case 90: _Rotate = 270; break;
+                            case 180: _Rotate = 0; break;
+                            case 270: _Rotate = 90; break;
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
             
             Refresh();
@@ -428,29 +476,34 @@ namespace CSCustomDisplay
                 // Fill Background
                 g.FillRectangle(BrushBlack, ClientRectangle);
 
-                using (var bmpImage = m_dcmImage.RenderImage().As<Bitmap>())
+                //using (var bmpImage = m_dcmImage.RenderImage().As<Bitmap>())
+                using (var renderImage = m_dcmImage.RenderImage())
                 {
-                    Rectangle rcDraw = GetDrawRect(ClientSize, bmpImage.Size);
-
-                    bmpImage.RotateFlip(m_eCurRF);
-                    
-                    if (m_bCapture)
+                    renderImage.Render(0, _FlipX, _FlipY, _Rotate);
+                    using (var bmpImage = renderImage.As<Bitmap>())
                     {
-                        // Quickly draw with mouse click
-                        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
-                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
-                        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
-                        g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
-                    }
-                    else
-                    {
-                        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
-                        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                        g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.AssumeLinear;
-                    }
+                        Rectangle rcDraw = GetDrawRect(ClientSize, bmpImage.Size, false);
 
-                    g.DrawImage(bmpImage, rcDraw);
+                        //bmpImage.RotateFlip(m_eCurRF);
+
+                        if (m_bCapture)
+                        {
+                            // Quickly draw with mouse click
+                            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+                            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
+                            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
+                            g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+                        }
+                        else
+                        {
+                            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
+                            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                            g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.AssumeLinear;
+                        }
+
+                        g.DrawImage(bmpImage, rcDraw);
+                    }
                 }
             }
             

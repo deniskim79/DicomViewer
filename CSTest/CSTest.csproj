@@ -92,6 +92,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exam.cs" />
     <Compile Include="TagViewer.cs">
       <SubType>Form</SubType>
     </Compile>

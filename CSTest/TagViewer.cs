@@ -81,7 +81,9 @@ namespace CSTest
 
         private void textBoxSearch_TextChanged(object sender, EventArgs e)
         {
-            if(textBoxSearch.Text != "")
+            // I'm C# Beginner
+            // You can optimize searching algorithm yourself
+            if (textBoxSearch.Text != "")
             {
                 var prev = this.Cursor;
 
