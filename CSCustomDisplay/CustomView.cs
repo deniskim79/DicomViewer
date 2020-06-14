@@ -25,8 +25,6 @@ namespace CSCustomDisplay
         private Point m_pointSave = new Point(0, 0);
         private bool m_bCapture = false;
 
-        private string[] m_strTag = new string[(int)UseTags.eTagName.eAllTagCount];
-
         private SolidBrush BrushBlack = new SolidBrush(Color.Black);
         private SolidBrush BrushWhite = new SolidBrush(Color.White);
 
@@ -117,34 +115,21 @@ namespace CSCustomDisplay
             return false;
         }
 
-        public string GetTag(UseTags.eTagName tagName)
+        public string GetTag(unsinged short group, unsinged short element)
         {
-            int nIndex = (int)tagName;
-            if (nIndex < 0 || nIndex >= (int)UseTags.eTagName.eAllTagCount)
-                throw new Exception("Tag Index out of range");
-
             if(m_dcmFile == null)
-                throw new Exception("Dicom file is not open");
-
-            return m_strTag[(int)tagName];
-        }
-
-        private void FillTag()
-        {
-            if (m_dcmFile == null)
                 throw new Exception("Dicom file is not open");
 
             Dicom.DicomFileMetaInformation mi = m_dcmFile.FileMetaInfo;
             Dicom.DicomDataset ds = m_dcmFile.Dataset;
             
-            for (int i=0; i<(int)UseTags.eTagName.eAllTagCount; i++)
-            {
-                var tagName = UseTags.UseDcmTag[i];
-                if (tagName.Group < 0x0008)
-                    m_strTag[i] = mi.Get(tagName, "");
-                else
-                    m_strTag[i] = ds.Get(tagName, "");
-            }
+            var value = "";
+            if (group < 0x0008)
+                value = mi.Get(group, element);
+            else
+                value = ds.Get(group, element);
+                   
+            return value;
         }
 
         public bool ReadDicom(string dcmPath)
@@ -166,8 +151,6 @@ namespace CSCustomDisplay
                     Refresh();
                     return false;
                 }
-
-                FillTag();
 
                 m_dcmImage = new Dicom.Imaging.DicomImage(m_dcmFile.Dataset);
 
@@ -454,29 +437,6 @@ namespace CSCustomDisplay
                 float fFontHeight = GetFontHeight();
                 using (Font font = new Font("Consolas", fFontHeight))
                 {
-
-                    tagValue = string.Format("[{0}] {1}",
-                        GetTag(UseTags.eTagName.eModality),
-                        GetTag(UseTags.eTagName.ePatientName));
-
-                    SizeF msSize = g.MeasureString(tagValue, font);
-                    PointF drawPos = new PointF();
-                    drawPos.X = fGap;
-                    drawPos.Y = fGap;
-                    DrawShadowString(g, tagValue, drawPos, font);
-
-                    tagValue = string.Format("{0} - {1}",
-                        GetTag(UseTags.eTagName.eSeriesDate),
-                        GetTag(UseTags.eTagName.eSeriesTime));
-                    msSize = g.MeasureString(tagValue, font);
-                    drawPos.Y += fGap + msSize.Height;
-                    DrawShadowString(g, tagValue, drawPos, font);
-
-                    tagValue = GetTag(UseTags.eTagName.eStudyDescription);
-                    msSize = g.MeasureString(tagValue, font);
-                    drawPos.Y += fGap + msSize.Height;
-                    DrawShadowString(g, tagValue, drawPos, font);
-
                     // Draw Window Width/Center
                     if (m_dcmImage != null)
                         tagValue = string.Format("W:{0} C:{1}", m_dcmImage.WindowWidth, m_dcmImage.WindowCenter);
@@ -502,7 +462,6 @@ namespace CSCustomDisplay
                     drawPos.X = ClientSize.Width - msSize.Width - fGap;
                     drawPos.Y -= (fGap + msSize.Height);
                     DrawShadowString(g, tagValue, drawPos, font);
-
 
                     tagValue = string.Format("ZOOM : {0}%", (int)ZoomRatio);
                     msSize = g.MeasureString(tagValue, font);

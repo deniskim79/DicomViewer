@@ -91,7 +91,6 @@
       <DependentUpon>CustomView.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UseTags.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="CustomView.resx">

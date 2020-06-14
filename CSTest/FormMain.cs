@@ -69,9 +69,6 @@ namespace CSTest
             allHeader.ShowDialog(this);
         }
 
-
-        private Manager mgr = new Manager();
-
         private void buttonTest_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFile = new OpenFileDialog();
@@ -89,52 +86,8 @@ namespace CSTest
 
                     var studyUID = ds.Get(Dicom.DicomTag.StudyInstanceUID, "");
 
-                    Exam exam = mgr.GetExam(studyUID);
-                    if (exam == null)
-                    {
-                        exam = new Exam(studyUID);
-
-                        exam.TransferSyntax = mi.TransferSyntax;
-
-                        exam.StudyDate = ds.Get(Dicom.DicomTag.StudyDate, "");
-                        exam.StudyTime = ds.Get(Dicom.DicomTag.StudyTime, "");
-
-                        mgr.Add(exam);
-                    }
-                    
-                    var sopInstanceUID = ds.Get(Dicom.DicomTag.SOPInstanceUID, "");
-                    var seriesUID = ds.Get(Dicom.DicomTag.SeriesInstanceUID, "");
-                    var seriesNumber = ds.Get(Dicom.DicomTag.SeriesNumber, "");
-                    var instanceNumber = ds.Get(Dicom.DicomTag.InstanceNumber, "");
-
-                    var series = exam.GetSeries(seriesUID, seriesNumber);
-                    if(series == null)
-                    {
-                        series = new ExamSeries();
-
-                        series.SeriesUID = seriesUID;
-                        series.SeriesNumber = seriesNumber;
-
-                        series.SeriesDate = ds.Get(Dicom.DicomTag.SeriesDate, "");
-                        series.SeriesTime = ds.Get(Dicom.DicomTag.SeriesTime, "");
-
-                        exam.Add(series);
-                    }
-
-                    var file = series.GetFileByUID(sopInstanceUID);
-                    if (file == null)
-                    {
-                        file = new ExamSeriesFile();
-                        file.FilePath = dcmPath;
-                        file.SopInstanceUID = sopInstanceUID;
-                        file.SeriesNumber = seriesNumber;
-                        file.InstanceNumber = instanceNumber;
-
-                        series.Add(file);
-                    }
+                    // TODO : 
                 }
-
-                mgr.Sort();
             }
         }
 
